@@ -1,8 +1,9 @@
-#Open spectrometer files
+#Import libraries
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+#Open spectrometer files 
 def leer_archivo_txt(nombre_archivo, saltar_lineas=5, delimitador=';'):
     try:
         df = pd.read_csv(nombre_archivo, delimiter=delimitador, skiprows=saltar_lineas)
