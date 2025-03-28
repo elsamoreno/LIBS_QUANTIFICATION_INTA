@@ -1,0 +1,9 @@
+
+Integration time [ms]:   1.050
+Averaging Nr. [scans]: 1
+Smoothing Nr. [pixels]: 0
+Data measured with spectrometer [name]: Simulated Device
+Wave   ;Sample   ;Dark     ;Reference
+[nm]   ;[counts] ;[counts] ;[counts] 
+
+

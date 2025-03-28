@@ -1,0 +1,49 @@
+Date: 2025/03/21
+Time: 10.30 h
+OM-parts: OHO baseplate SN3 with:
+  **RAMAN**
+	- (X) Raman excitation barrel SN2 --> ORIGINAL STOP REMOVED. NEW STOP (Santi) ASSEMBLED INTO BARREL // LLF-Spacer (AL LLFdummy manufactured by Santi)
+	- (X) Raman Folding Elemnt SN3 (mount SN3 & mirror SN3)
+	- (X) Raman Dichroic SN3 (mount SN3 & dichroic SN3)
+	- (X) Raman collection barrel SN2 --> EXTRA LPfilter (RLS-128 #14) inside fiber adapter
+	- (X) Focuser SN4
+	- (X) Camera dichroic (Not serialized, bonded with Elastosil A07)
+	- (X) LIBS dichroic (Not serialized, bonded with Elastosil A07)
+	- (X) KG filter (not serielized, bonded with Elastosil A07)
+  **CAMERA**
+	- (X) Camera folding element SN1 (mount SN1 & mirror SN1)
+	- (X) Camera barrel SN3 --> !! camera barrel SN2 not run freely (its too tight)
+	- (X) Stop assembly (Not serialized)
+  **LIBS**
+	- (X) LIBS Expander SN1
+	- (X) LIBS Folding mirror SN3 (mount SN3 & mirror SN3)
+	- (X) LIBS collection barrel SN3
+  **FRONT FRAME ELEMENTS**
+	- (X) External Window
+	- (X) Front frame
+	- (X) Pointing structure
+	- (X) Pointers (1&2)
+	- (X) LEDs support
+	- (X) Shutter
+
+	
+UNITS: 	Camera Mako 5050 (G419-C PoE) --> Camera Calibration target (R1L1S3P)
+	LIBS Laser 9983-A LIBS Driver 11049
+	LED Ring
+
+OGSE:	HCH-Raman Thorlabs SN1 + FCPC/FCPC MB-HCH feedthrough + MB-Raman SN2 Polymicro (aligned into SPU640)
+	HCH-LIBS Thorlabs backup + FCPC/FCPC MB-HCH feedthrough +  MB-LIBS IDIL 
+	
+GSE: 	LEDs
+	Power benchtop 4ch -> ch 1 = 24V & 180mA (for LED ring)
+
+
+% TEST #01: LIBS Ti reference thorlabs ----.
+Back up fiber thorlab ---- is been used now.
+Ti sample positioned
+LIBS laser connected and configured for single shot (5Hz). 
+Checking spectrum with back up fiber thorlabs ----
+Shot 1 --> IMG : Ti_ReferenceA02_shot1 --> low signal UV2.
+Shot 2 --> IMG : Ti_ReferenceA02_shot2 --> Signal in UV1, VIS and NIR enhanced.
+
+Test ended at : 10.46 h
