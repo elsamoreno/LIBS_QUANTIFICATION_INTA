@@ -52,6 +52,10 @@ def denoise_spectrum_uwt(spectrum, wavelet_name='bior3.3', level=None, threshold
     original_len = len(spectrum)
 
     if level is None:
+        # Asegurar que la longitud sea par (agregar padding si es impar)
+        if original_len % 2 != 0:
+            spectrum = np.pad(spectrum, (0, 1), mode='edge')  # duplica el último valor
+            original_len += 1
         level = pywt.swt_max_level(original_len)
 
     spectrum_padded, pad_size = pad_to_multiple(spectrum, 2 ** level)
