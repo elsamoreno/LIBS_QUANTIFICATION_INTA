@@ -3,7 +3,6 @@ import numpy as np
 import pywt
 from scipy.signal import argrelextrema
 from scipy.interpolate import CubicSpline
-from denoising_fun import  denoise_spectrum_uwt
 
 # --------------------------------------
 # FUNCIÓN PRINCIPAL DE PREPROCESADO
