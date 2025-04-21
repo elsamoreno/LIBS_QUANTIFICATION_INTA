@@ -8,79 +8,97 @@ from denoising_fun import  denoise_spectrum_uwt
 # --------------------------------------
 # FUNCIÓN PRINCIPAL DE PREPROCESADO
 # --------------------------------------
-def preprocesar_espectro(spectrum,
-                         wavelet='bior3.3',
-                         denoise_level=None,
-                         denoise_threshold_sigma = 3,
-                         denoise_method='mad',
-                         n_iter_supercam=5,
-                         rbe_span=0.1,
-                         rbe_max_iter=5,
-                         rbe_b=3.5,
-                         normalization='suma',
-                         return_continuum=False):
+def apply_preprocessing(spectra, wavelengths, normalization='continuo',
+                        trim=True,
+                        wavelet='bior3.3',
+                        denoise_level=None,
+                        denoise_threshold_sigma=3,
+                        denoise_method='mad',
+                        n_iter_supercam=5,
+                        rbe_span=0.1,
+                        rbe_max_iter=5,
+                        rbe_b=3.5,
+                        return_continuum=False):
     """
-    Aplica el preprocesado completo: denoising + baseline removal + normalización.
+    Aplica el preprocesado completo a una lista de espectros: denoising + stitching + baseline removal.
 
     Parámetros:
     -----------
-    spectrum : array_like
-        Espectro original.
-    wavelet : str
-        Nombre del wavelet para el denoising.
-    denoise_level : int o None
-        Nivel de descomposición del wavelet.
-    denoise_threshold_sigma : float
-        Umbral para sigma clipping.
-    denoise_method : 'mad' o 'supercam'
-        Método de sigma clipping.
-    n_iter_supercam : int
-        Número de iteraciones para sigma clipping tipo SuperCam.
-    rbe_span : float
-        Proporción de puntos usados en la regresión local robusta.
-    rbe_max_iter : int
-        Número máximo de iteraciones para RBE.
-    rbe_b : float
-        Constante para la función bi-square en RBE.
-    normalization : 'suma' o 'continuo'
-        Método para realizar el sigma Clipping.
-    return_continuum : bool
-        Si True, también devuelve el continuo estimado.
+    spectra : list of np.ndarray
+        Lista de espectros originales.
+    wavelengths : list of np.ndarray
+        Lista de longitudes de onda para cada espectro.
+    normalization : 'suma', 'continuo' o 'none'
+        Método de normalización a aplicar. 'suma' normaliza por la suma total, 'continuo' por el continuo estimado, 'none' no aplica normalización.
+    trim : bool, opcional
+        Si es True, recorta los espectros y longitudes de onda en función de regiones de solapamiento óptimas.
 
     Devuelve:
     ---------
-    spectrum_final : np.ndarray
-        Espectro corregido, limpio y normalizado.
-    continuum : np.ndarray (opcional)
-        Continuo estimado (si return_continuum=True).
+    spectra_final : list of np.ndarray
+        Lista de espectros procesados.
+    continuum_list : list of np.ndarray (opcional)
+        Lista de continuos estimados, si return_continuum=True.
+    wavelengths : list of np.ndarray
+        Lista de longitudes de onda (posiblemente recortadas).
     """
 
-    # 1. Denoising
-    spectrum_denoised = denoise_spectrum_uwt(spectrum, wavelet=wavelet,
-                                             level=denoise_level,
-                                             threshold_sigma=denoise_threshold_sigma,
-                                             method=denoise_method,
-                                             n_iter_supercam=n_iter_supercam)                                            
+    def get_param(param, i):
+        return param[i] if isinstance(param, (list, tuple, np.ndarray)) else param
 
-    # 2. Baseline removal
-    spectrum_baseless, continuum = robust_baseline_estimation(spectrum_denoised,
-                                                              span=rbe_span, 
-                                                              max_iter=rbe_max_iter, 
-                                                              b=rbe_b)
+    # Inicializar listas de salida
+    spectra_denoised = []
 
-    # 3. Normalización
+    # Denoising
+    for i, spectrum in enumerate(spectra):
+        wl = get_param(wavelet, i)
+        lvl = get_param(denoise_level, i)
+        sig = get_param(denoise_threshold_sigma, i)
+        method = get_param(denoise_method, i)
+        nit = get_param(n_iter_supercam, i)
+
+        spectrum_denoised = denoise_spectrum_uwt(spectrum,
+                                                 wavelet_name=wl,
+                                                 level=lvl,
+                                                 threshold_sigma=sig,
+                                                 method=method,
+                                                 n_iter_supercam=nit)
+        spectra_denoised.append(spectrum_denoised)
+
+    # Aplicar stitching
+    spectra_stitched = stitch_spectra(spectra_denoised, wavelengths)  
+
+    # Recortar espectros si se solicita
+    if trim:
+        spectra_stitched, wavelengths = trim_overlap_regions(spectra_stitched, wavelengths) 
+
+    # Baseline removal
+    spectra_final = []
+    continuum_list = []
+
+    for i, spectrum in enumerate(spectra_stitched):
+        span = get_param(rbe_span, i)
+        it_rbe = get_param(rbe_max_iter, i)
+        b_val = get_param(rbe_b, i) 
+
+        continuum, spectrum_baseless = robust_baseline_estimation(spectrum,
+                                                                  span=span,
+                                                                  max_iter=it_rbe,
+                                                                  b=b_val)
+
+        spectra_final.append(spectrum_baseless)
+        continuum_list.append(continuum)
+
+    # Normalización
     if normalization == 'suma':
-        spectrum_final = normalizar_por_suma(spectrum_baseless)
+        spectra_final = [normalizar_por_suma(spectrum) for spectrum in spectra_final]
     elif normalization == 'continuo':
-        spectrum_final = normalizar_por_continuo(continuum, spectrum_baseless)
-    else:
-        raise ValueError("Método de normalización no reconocido: usa 'suma' o 'continuo'.")
+        spectra_final = [normalizar_por_continuo(continuum, spectrum) for spectrum, continuum in zip(spectra_final, continuum_list)]
 
     if return_continuum:
-        return spectrum_final, continuum
+        return spectra_final, continuum_list, wavelengths
     else:
-        return spectrum_final
-
+        return spectra_final, wavelengths
 
 # --------------------------------------
 # 1. Denoising por Wavelet (UWT + sigma clipping)
@@ -246,9 +264,58 @@ def tukey_biweight(residuals, b=3.5):
     return weights
 
 # --------------------------------------
-# 3. Normalización
+# 3. Stitching/Estandarización
 # --------------------------------------
-# Normalización por suma
+def stitch_spectra(spectra, wavelengths):
+    """
+    Realiza el 'stitching' de múltiples espectros ajustando sus intensidades en zonas de solapamiento.
+
+    Parámetros:
+    -----------
+    spectra : list of np.ndarray
+        Lista de espectros a unir.
+    wavelengths : list of np.ndarray
+        Lista de longitudes de onda correspondientes a cada espectro.
+
+    Devuelve:
+    ---------
+    stitched_spectra : list of np.ndarray
+        Lista de espectros corregidos con los coeficientes de stitching aplicados.
+    """
+    #Declaración de los intervalos de solapamiento
+    i1 = (wavelengths[1][1], wavelengths[0][len(wavelengths[0])-1])
+    i2 = (wavelengths[2][1], wavelengths[1][len(wavelengths[1])-1])
+    i3 = (wavelengths[3][1], wavelengths[2][len(wavelengths[2])-1])
+    #Aislamiento de los intervalos de solapamiento
+    datos_UV1_fil1 = spectra[0][(wavelengths[0] >= i1[0]) & (wavelengths[0] <= i1[1])]
+    datos_UV2_fil1 = spectra[1][(wavelengths[1] >= i1[0]) & (wavelengths[1] <= i1[1])]
+    datos_UV2_fil2 = spectra[1][(wavelengths[1] >= i2[0]) & (wavelengths[1] <= i2[1])]
+    datos_VIS_fil2 = spectra[2][(wavelengths[2] >= i2[0]) & (wavelengths[2] <= i2[1])]
+    datos_VIS_fil3 = spectra[2][(wavelengths[2] >= i3[0]) & (wavelengths[2] <= i3[1])]
+    datos_NIR_fil3 = spectra[3][(wavelengths[3] >= i3[0]) & (wavelengths[3] <= i3[1])]
+    #Extracción de las medianas
+    mediana_UV1_fil1 = np.median(datos_UV1_fil1)
+    mediana_UV2_fil1 = np.median(datos_UV2_fil1)
+    mediana_UV2_fil2 = np.median(datos_UV2_fil2)
+    mediana_VIS_fil2 = np.median(datos_VIS_fil2)
+    mediana_VIS_fil3 = np.median(datos_VIS_fil3)
+    mediana_NIR_fil3 = np.median(datos_NIR_fil3)
+    #Cálculo de los coeficientes
+    coef1 = mediana_UV2_fil1/mediana_UV1_fil1
+    coef2 = mediana_VIS_fil2/mediana_UV2_fil2
+    coef3 = mediana_NIR_fil3/mediana_VIS_fil3
+    #Aplicación de los coeficientes
+    datos_UV1_corr = spectra[0]*coef3*coef2*coef1
+    datos_UV2_corr = spectra[1]*coef3*coef2
+    datos_VIS_corr = spectra[2]*coef3
+    datos_NIR_corr = spectra[3]
+    sitich_coefs = [datos_UV1_corr, datos_UV2_corr, datos_VIS_corr, datos_NIR_corr]
+
+    return sitich_coefs
+
+# --------------------------------------
+# 4. Normalización
+# --------------------------------------
 def normalizar_por_suma(espectro):
     """
     Normaliza un espectro dividiendo cada valor entre la suma total del espectro.
@@ -271,8 +338,6 @@ def normalizar_por_suma(espectro):
 
     espectro_normalizado = espectro / suma_total
     return espectro_normalizado
-
-# Normalización por continuo
 def normalizar_por_continuo(continuum, espectro):
     """
     Normaliza un espectro dividiendo cada valor entre la suma total del espectro.
@@ -296,4 +361,52 @@ def normalizar_por_continuo(continuum, espectro):
     espectro_normalizado = espectro / suma_total
     return espectro_normalizado
 
+# --------------------------------------
+# 5. Recorte de regiones de solapamiento
+# --------------------------------------
+def trim_overlap_regions(spectra, wavelengths):
+    """
+    Recorta los espectros para conservar solo las regiones óptimas por detector:
+    - UV1 para el solapamiento UV1-UV2
+    - VIS para el solapamiento UV2-VIS
+    - NIR para el solapamiento VIS-NIR
+    - Elimina valores por encima de 1000 nm
 
+    Parámetros:
+    -----------
+    spectra : list of np.ndarray
+        Lista de espectros UV1, UV2, VIS, NIR.
+    wavelengths : list of np.ndarray
+        Lista de longitudes de onda correspondientes.
+
+    Devuelve:
+    ---------
+    spectra_trimmed : list of np.ndarray
+        Espectros recortados.
+    wavelengths_trimmed : list of np.ndarray
+        Longitudes de onda recortadas.
+    """
+
+    # Obtener intervalos de solapamiento
+    i1_min, i1_max = wavelengths[1][1], wavelengths[0][-1]
+    i2_min, i2_max = wavelengths[2][1], wavelengths[1][-1]
+    i3_min, i3_max = wavelengths[3][1], wavelengths[2][-1]
+
+    espectro_uv1 = spectra[0]
+    wl_uv1 = wavelengths[0]
+    # UV2: quedarse solo con su parte no solapada
+    mask_uv2 = (wavelengths[1] >= i1_max) & (wavelengths[1] <= i2_min) 
+    espectro_uv2 = spectra[1][mask_uv2]
+    wl_uv2 = wavelengths[1][mask_uv2]
+
+    # VIS: quitar el solapamiento con NIR
+    mask_vis = (wavelengths[2] <= i3_min)
+    espectro_vis = spectra[2][mask_vis]
+    wl_vis = wavelengths[2][mask_vis]
+
+    # NIR: desde i3_min hasta 1000nm
+    mask_nir = wavelengths[3] <= 1000
+    espectro_nir = spectra[3][mask_nir]
+    wl_nir = wavelengths[3][mask_nir]
+
+    return [espectro_uv1, espectro_uv2, espectro_vis, espectro_nir], [wl_uv1, wl_uv2, wl_vis, wl_nir]
