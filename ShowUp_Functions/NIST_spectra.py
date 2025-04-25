@@ -138,6 +138,10 @@ def LIBS_over_NIST(dataUV1, dataUV2, dataVIS, dataNIR, Elems, IntensityThreshold
 
 
 def average_spectra(data_list):
+
+    if not data_list:
+        # Si la lista está vacía, devolver un DataFrame vacío con las columnas esperadas
+        return pd.DataFrame(columns=["Wave", "Sample"])
     """
     Calcula el espectro promedio a partir de una lista de DataFrames de espectros.
     
