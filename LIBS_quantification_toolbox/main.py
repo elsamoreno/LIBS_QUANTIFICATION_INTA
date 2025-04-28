@@ -1,10 +1,39 @@
 from lectura import cargar_espectros
 from lectura import cargar_espectros_5shots
 from lectura import cargar_espectros_5shotsprom
+from preprocesado import apply_preprocessing
+from visualizacion import plot_spectra
+from visualizacion import plot_multiple_spectra_vertical
+import numpy as np
 
 espectro, longitud_de_onda, nombres = cargar_espectros("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position1", "Pellet-T1_position1_Burst5-n1" ) 
 
-nombres, lambdas, n1, n2, n3, n4, n5 = cargar_espectros_5shots("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position1", "Pellet-T1_position1_Burst5")
+nombres, lambdas, n1, n2, n3, n4, n5 = cargar_espectros_5shots("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position2", "Pellet-T1_position2_Burst5")
 
-nombres, lambdas, UV1_prom, UV2_prom, VIS_prom, NIR_prom = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position1", "Pellet-T1_position1_Burst5")
+#Lectura datos T1
+nombres, lambdas1, UV1_T1_P1, UV2_T1_P1, VIS_T1_P1, NIR_T1_P1 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position1", "Pellet-T1_position1_Burst5")
+nombres, lambdas2, UV1_T1_P2, UV2_T1_P2, VIS_T1_P2, NIR_T1_P2 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position2", "Pellet-T1_position2_Burst5")
+nombres, lambdas3, UV1_T1_P3, UV2_T1_P3, VIS_T1_P3, NIR_T1_P3 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/2.Pellet_T1/Position3", "Pellet-T1_position3_Burst5")
+#Lectura datos T2
+nombres, lambdas4, UV1_T2_P1, UV2_T2_P1, VIS_T2_P1, NIR_T2_P1 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/1.Pellets_T2/Position1", "Pellet_position1_Burst5")
+nombres, lambdas5, UV1_T2_P2, UV2_T2_P2, VIS_T2_P2, NIR_T2_P2 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/1.Pellets_T2/Position2", "Pellet_position2_Burst5")
+nombres, lambdas6, UV1_T2_P3, UV2_T2_P3, VIS_T2_P3, NIR_T2_P3 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/1.Pellets_T2/Position3", "Pellet_position3_Burst5")
+#Lectura datos T3
+nombres, lambdas7, UV1_T3_P1, UV2_T3_P1, VIS_T3_P1, NIR_T3_P1 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/3.Pellet_T3/Position1", "Pellet-T3_position1_Burst5")
+nombres, lambdas8, UV1_T3_P2, UV2_T3_P2, VIS_T3_P2, NIR_T3_P2 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/3.Pellet_T3/Position2", "Pellet-T3_position2_Burst5")
+nombres, lambdas9, UV1_T3_P3, UV2_T3_P3, VIS_T3_P3, NIR_T3_P3 = cargar_espectros_5shotsprom("../Spectra/20250328_OHO-SN3_LIBS-Quantif_samples/3.Pellet_T3/Position3", "Pellet-T3_position3_Burst5")
 
+processed_spectra_T1_P1, ws1 = apply_preprocessing([UV1_T1_P1, UV2_T1_P1, VIS_T1_P1, NIR_T1_P1], lambdas)
+processed_spectra_T1_P2, ws2 = apply_preprocessing([UV1_T1_P2, UV2_T1_P2, VIS_T1_P2, NIR_T1_P2], lambdas)
+processed_spectra_T1_P3, ws3 = apply_preprocessing([UV1_T1_P3, UV2_T1_P3, VIS_T1_P3, NIR_T1_P3], lambdas)
+processed_spectra_T2_P1, ws4 = apply_preprocessing([UV1_T2_P1, UV2_T2_P1, VIS_T2_P1, NIR_T2_P1], lambdas)
+processed_spectra_T2_P3, ws5 = apply_preprocessing([UV1_T2_P3, UV2_T2_P3, VIS_T2_P3, NIR_T2_P3], lambdas)
+processed_spectra_T3_P1, ws6 = apply_preprocessing([UV1_T3_P1, UV2_T3_P1, VIS_T3_P1, NIR_T3_P1], lambdas)
+processed_spectra_T3_P2, ws7 = apply_preprocessing([UV1_T3_P2, UV2_T3_P1, VIS_T3_P2, NIR_T3_P2], lambdas)
+
+
+
+plot_multiple_spectra_vertical([ws1, ws2, ws3], 
+                      [processed_spectra_T1_P1, processed_spectra_T1_P2, processed_spectra_T1_P3], 
+                      "Espectros de LIBS", 
+                      nombres=["T1 P1", "T1 P2", "T1 P3"])

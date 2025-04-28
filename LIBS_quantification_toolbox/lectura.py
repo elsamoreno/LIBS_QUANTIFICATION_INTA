@@ -82,39 +82,46 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
 
 
 def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
-    nombres, wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5 = cargar_espectros_5shots(carpeta, nombre_base)
+    n, ws, n1, n2, n3, n4, n5 = cargar_espectros_5shots(carpeta, nombre_base)
 
-    umbral_saturacion = 0.95*65535 #Nivel de filtrado superior para evitar espectros saturados
-    umbral_energia = 0.5*65535 #Nivel de filtrado inferior para evitar espectros poco energéticos
+    umbral_saturacion = 0.95 * 65535  # Nivel de filtrado superior para evitar espectros saturados
+    umbral_energia = 0.5 * 65535      # Nivel de filtrado inferior para evitar espectros poco energéticos
 
-    #Agrupamos los espectros en función del rango de frecuencias descartando el primer shot
-    espectros_UV1 = np.array([espectros_n2[0], espectros_n3[0], espectros_n4[0], espectros_n5[0]])
-    espectros_UV2 = np.array([espectros_n2[1], espectros_n3[1], espectros_n4[1], espectros_n5[1]])
-    espectros_VIS = np.array([espectros_n2[2], espectros_n3[2], espectros_n4[2], espectros_n5[2]])
-    espectros_NIR = np.array([espectros_n2[3], espectros_n3[3], espectros_n4[3], espectros_n5[3]])
+    # Agrupamos los espectros en función del rango de frecuencias descartando el primer shot
+    espectros_UV1 = np.array([n1[0], n2[0], n3[0], n4[0], n5[0]])
+    espectros_UV2 = np.array([n1[1], n2[1], n3[1], n4[1], n5[1]])
+    espectros_VIS = np.array([n1[2], n2[2], n3[2], n4[2], n5[2]])
+    espectros_NIR = np.array([n1[3], n2[3], n3[3], n4[3], n5[3]])
 
     # Índices de los shots válidos según el VIS
     indices_validos = []
 
-    #Filtramos los espectros para deshacernos de los saturados o muy poco energéticos según el rango visible, que es donde se halla el máximo
+    # Filtramos los espectros para deshacernos de los saturados o muy poco energéticos
     for i, spec_vis in enumerate(espectros_VIS):
         max_val = np.max(spec_vis)
-        
-        if max_val < umbral_saturacion and max_val > umbral_energia:
+        if umbral_energia < max_val < umbral_saturacion:
             indices_validos.append(i)
 
-    # Filtramos todos los arrays con los índices válidos
-    UV1_filtrado = [espectros_UV1[i] for i in indices_validos]
-    UV2_filtrado = [espectros_UV2[i] for i in indices_validos]
-    VIS_filtrado = [espectros_VIS[i] for i in indices_validos]
-    NIR_filtrado = [espectros_NIR[i] for i in indices_validos]
-    
-    UV1_prom = np.mean(UV1_filtrado, axis=0)
-    UV2_prom = np.mean(UV2_filtrado, axis=0)
-    VIS_prom = np.mean(VIS_filtrado, axis=0)
-    NIR_prom = np.mean(NIR_filtrado, axis=0)
-    
-    return nombres, wavelengths, UV1_prom, UV2_prom, VIS_prom, NIR_prom
+    if len(indices_validos) == 0:
+        print(f"No hay espectros validos para calcular la media en el shot {i}.")
+        UV1_prom = None
+        UV2_prom = None
+        VIS_prom = None
+        NIR_prom = None
+    else:
+        # Filtramos todos los arrays con los índices válidos
+        UV1_filtrado = [espectros_UV1[i] for i in indices_validos]
+        UV2_filtrado = [espectros_UV2[i] for i in indices_validos]
+        VIS_filtrado = [espectros_VIS[i] for i in indices_validos]
+        NIR_filtrado = [espectros_NIR[i] for i in indices_validos]
+
+        UV1_prom = np.mean(UV1_filtrado, axis=0)
+        UV2_prom = np.mean(UV2_filtrado, axis=0)
+        VIS_prom = np.mean(VIS_filtrado, axis=0)
+        NIR_prom = np.mean(NIR_filtrado, axis=0)
+
+    return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
+
 
    
    
