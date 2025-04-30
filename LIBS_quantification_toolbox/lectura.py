@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import csv
 
+
+
 def leer_archivo_txt(nombre_archivo, saltar_lineas=5, delimitador=';'):
     try:
         df = pd.read_csv(nombre_archivo, delimiter=delimitador, skiprows=saltar_lineas)
@@ -18,17 +20,18 @@ def leer_archivo_txt(nombre_archivo, saltar_lineas=5, delimitador=';'):
         print(f"Error al leer el archivo: {e}")
         return None, None
     
+
 def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
-    # Asegurarnos de que la carpeta existe
     carpeta_destino = os.path.dirname(nombre_archivo)
     if not os.path.exists(carpeta_destino):
-        os.makedirs(carpeta_destino)  # Crea la carpeta si no existe
+        os.makedirs(carpeta_destino)
 
     with open(nombre_archivo, mode='w', newline='') as file:
         writer = csv.writer(file)
         if encabezado:
-            writer.writerow(encabezado)  # Escribe la cabecera si se proporciona
-        writer.writerows(datos)  # Escribe las filas de datos
+            writer.writerow(encabezado)
+        writer.writerows(datos)
+
 
 def cargar_espectros(carpeta, nombre_base, quitar_extremos=True):
     """
@@ -97,6 +100,15 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
 def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
     n, ws, n1, n2, n3, n4, n5 = cargar_espectros_5shots(carpeta, nombre_base)
 
+    partes = os.path.normpath(carpeta).split(os.sep)
+    
+    try:
+        idx_level0 = partes.index("Level0")
+        mx = partes[idx_level0 + 1]
+        py = partes[idx_level0 + 2]
+    except (ValueError, IndexError):
+        raise ValueError(f"No se pudo extraer MX y PY desde la ruta: {carpeta}")
+
     umbral_saturacion = 0.95 * 65535  # Nivel de filtrado superior para evitar espectros saturados
     umbral_energia = 0.5 * 65535      # Nivel de filtrado inferior para evitar espectros poco energéticos
 
@@ -133,12 +145,14 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
         VIS_prom = np.mean(VIS_filtrado, axis=0)
         NIR_prom = np.mean(NIR_filtrado, axis=0)
 
-        ruta = f"{carpeta}"/../Level1"
-        nombre_archivo = os.path.join(ruta, "LV1_M1_P1")
-
-        resultados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
+         # Construir la ruta de salida
+        nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
+        datos_procesados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
         encabezado = ['UV1', 'UV2', 'VIS', 'NIR']
-        guardar_resultados_csv(nombre_archivo, resultados, encabezado)
+
+        # Guardar
+        guardar_resultados_csv(nombre_archivo_salida, datos_procesados, encabezado)
+
 
     return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
 
