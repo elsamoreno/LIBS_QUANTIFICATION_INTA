@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+import csv
 
 def leer_archivo_txt(nombre_archivo, saltar_lineas=5, delimitador=';'):
     try:
@@ -16,6 +17,18 @@ def leer_archivo_txt(nombre_archivo, saltar_lineas=5, delimitador=';'):
     except Exception as e:
         print(f"Error al leer el archivo: {e}")
         return None, None
+    
+def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
+    # Asegurarnos de que la carpeta existe
+    carpeta_destino = os.path.dirname(nombre_archivo)
+    if not os.path.exists(carpeta_destino):
+        os.makedirs(carpeta_destino)  # Crea la carpeta si no existe
+
+    with open(nombre_archivo, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        if encabezado:
+            writer.writerow(encabezado)  # Escribe la cabecera si se proporciona
+        writer.writerows(datos)  # Escribe las filas de datos
 
 def cargar_espectros(carpeta, nombre_base, quitar_extremos=True):
     """
@@ -120,8 +133,14 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
         VIS_prom = np.mean(VIS_filtrado, axis=0)
         NIR_prom = np.mean(NIR_filtrado, axis=0)
 
+        ruta = f"{carpeta}"/../Level1"
+        nombre_archivo = os.path.join(ruta, "LV1_M1_P1")
+
+        resultados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
+        encabezado = ['UV1', 'UV2', 'VIS', 'NIR']
+        guardar_resultados_csv(nombre_archivo, resultados, encabezado)
+
     return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
 
 
-   
-   
+
