@@ -30,7 +30,7 @@ nombres, lambdas9, UV1_T3_P3, UV2_T3_P3, VIS_T3_P3, NIR_T3_P3 = cargar_espectros
 
 
 
-#plot_multiple_spectra_vertical([ws1, ws2, ws3], 
+#plot_multiple_spectra_vertical([lambdas1, lambdas2, lambdas3], 
 #                      [processed_spectra_T1_P1, processed_spectra_T1_P2, processed_spectra_T1_P3], 
 #                      "Espectros de LIBS", 
 #                      nombres=["T1 P1", "T1 P2", "T1 P3"])

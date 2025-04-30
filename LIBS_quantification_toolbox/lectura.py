@@ -147,11 +147,14 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
 
          # Construir la ruta de salida
         nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
-        datos_procesados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
-        encabezado = ['UV1', 'UV2', 'VIS', 'NIR']
-
+        datos = []
+        intensidades = [UV1_prom, UV2_prom, VIS_prom, NIR_prom] 
+        for lmbs, ints in zip(ws, intensidades):
+            for l, i in zip(lmbs, ints):
+                datos.append([l, i])
+        
         # Guardar
-        guardar_resultados_csv(nombre_archivo_salida, datos_procesados, encabezado)
+        guardar_resultados_csv(nombre_archivo_salida, datos)
 
 
     return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
