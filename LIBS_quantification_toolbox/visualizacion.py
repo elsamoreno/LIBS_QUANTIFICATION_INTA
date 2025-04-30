@@ -2,47 +2,84 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_spectra(wavelengths, espectros, titulo, nombres=None, 
-                 xlabel="Longitud de onda (nm)", ylabel="Intensidad (cuentas)", figsize=(12, 5)):
+                 xlabel="Longitud de onda (nm)", 
+                 ylabel="Intensidad (cuentas)", 
+                 figsize=(12, 5)):
     """
-    Representa múltiples espectros en una misma gráfica.
+    Plot one or more spectra (wavelength vs. intensity) on the same axes.
 
-    Parámetros:
-    -----------
-    wavelengths : list of np.ndarray
-        Lista de longitudes de onda para cada espectro.
-    espectros : list of np.ndarray
-        Lista de espectros (intensidades) a representar.
-    nombres : list of str, opcional
-        Etiquetas para cada espectro. Si no se proporciona, se enumeran como 'Espectro 1', 'Espectro 2', ...
-    titulo : str, opcional
-        Título de la gráfica.
-    xlabel : str, opcional
-        Etiqueta del eje X.
-    ylabel : str, opcional
-        Etiqueta del eje Y.
-    figsize : tuple, opcional
-        Tamaño de la figura (por defecto (12, 5)).
+    This function accepts either:
+      1. Single-spectrum inputs:
+         - `wavelengths`: 1D array of length N
+         - `intensities`: 1D array of length N
+      2. Multi-spectrum inputs:
+         - `wavelengths`: list/tuple of M arrays [wl_1, wl_2, ..., wl_M]
+         - `intensities`: list/tuple of M arrays [sp_1, sp_2, ..., sp_M]
+    Parameters
+    ----------
+    wavelengths : array_like or list of array_like
+        Wavelength axis (nm) for each spectrum, either a single 1D array or
+        a list of 1D arrays.
+    espectros : array_like or list of array_like
+        Intensity axis for each spectrum, matching lengths/shapes of
+        `wavelengths`.
+    title : str
+        Figure title.
+    nombres : list of str, optional
+        Legend labels for each spectrum. If omitted, spectra are labeled
+        "Spec 1", "Spec 2", ...
+    xlabel : str, optional
+        X-axis label.
+    ylabel : str, optional
+        Y-axis label.
+    figsize : tuple, optional
+        Matplotlib figure size.
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The created Figure object.
+    ax : matplotlib.axes.Axes
+        The Axes with the plotted spectra.
     """
+    # --- Wrap single-spectrum inputs into lists ---
+    if isinstance(wavelengths, np.ndarray) and isinstance(espectros, np.ndarray):
+        wavelengths = [wavelengths]
+        espectros = [espectros]
 
+    # --- Convert any tuples to lists for uniformity ---
+    wavelengths = list(wavelengths)
+    espectros = list(espectros)
+
+    # --- Basic validation ---
+    if len(wavelengths) != len(espectros):
+        raise ValueError(f"Number of wavelength arrays ({len(wavelengths)}) "
+                        f"!= number of intensity arrays ({len(espectros)})")
+
+    # --- Prepare labels ---
+    n = len(espectros)
     if nombres is None:
-        nombres = [f"Shot {i+1}" for i in range(len(espectros))]
+        nombres = [f"Shot {i+1}" for i in range(n)]
+    if len(nombres) != n:
+        raise ValueError(f"Length of labels ({len(nombres)}) != number of spectra ({n})")
 
-    plt.figure(figsize=figsize)
-    
-
-    for i in range(len(espectros)):
-        if wavelengths[i] is not None and espectros[i] is not None:
-            plt.plot(wavelengths[i], espectros[i], label=nombres[i])
-        else:
-            print(f"Aviso: El espectro {i} o su longitud de onda es None y no se representará.")
-
-    plt.title(titulo)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.legend()
-    plt.grid(True)
+    # --- Plotting ---
+    fig, ax = plt.subplots(figsize=figsize)
+    for wl, sp, lbl in zip(wavelengths, espectros, nombres):
+        wl = np.asarray(wl)
+        sp = np.asarray(sp)
+        if wl.shape != sp.shape:
+            raise ValueError(f"Shape mismatch: wavelengths {wl.shape} vs intensities {sp.shape}")
+        ax.plot(wl, sp, label=lbl)
+    ax.set_title(titulo)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend()
     plt.tight_layout()
     plt.show()
+
+    return fig, ax
+
 
 
 def plot_multiple_spectra_vertical(wavelengths, espectros, titulo, nombres=None, xlabel="Longitud de onda (nm)", ylabel="Intensidad (cuentas)"):
