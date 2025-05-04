@@ -25,6 +25,19 @@ Main API:
 
 import numpy as np
 import pywt
+import os
+import csv
+
+def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
+    carpeta_destino = os.path.dirname(nombre_archivo)
+    if not os.path.exists(carpeta_destino):
+        os.makedirs(carpeta_destino)
+
+    with open(nombre_archivo, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        if encabezado:
+            writer.writerow(encabezado)
+        writer.writerows(datos)
 
 # --------------------------------------
 # MAIN API
@@ -59,7 +72,7 @@ def apply_preprocessing(raw_spectra,raw_wavelengths,
     normalized, cont = normalize_by_continuum(continua, trimmed)
 
     wls = np.concatenate(trimmed_wavelengths)
-    return (normalized, wls, cont) if return_continuum else (normalized, wls)
+    return (wls, normalized, cont) if return_continuum else (wls, normalized)
 
 # --------------------------------------
 # 1) DENOISING: undecimated wavelet + sigma clipping
@@ -324,3 +337,21 @@ def normalize_by_continuum(continua, spectra):
     if total==0:
         raise ValueError("Continuum sum is zero.")
     return spec/total, cont
+
+
+
+def apply_preprocessing_and_save(raw_spectra,raw_wavelengths, nombre_archivo_salida,
+    wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
+    baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
+    return_continuum=False):
+
+    lambdas, preprocessed_spectra = apply_preprocessing(raw_spectra,raw_wavelengths,
+    wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
+    baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
+    return_continuum=False)
+
+    datos = list(zip(lambdas, preprocessed_spectra))
+
+    guardar_resultados_csv(nombre_archivo_salida, datos)
+
+    return lambdas, preprocessed_spectra

@@ -83,6 +83,29 @@ def cargar_espectros(carpeta, nombre_base, quitar_extremos=True):
 
 
 def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
+
+    """
+    Carga automáticamente los archivos UV1, UV2, VIS y NIR correspondientes a los 5 shots de un mismo spot.
+
+    Parámetros:
+    -----------
+    carpeta : str
+        Nombre de la subcarpeta dentro de '../Spectra/'.
+    nombre_base : str
+        Parte común del nombre del archivo sin el sufijo numérico.
+    quitar_extremos : bool, opcional
+        Si True, elimina los primeros y últimos 16 valores (por defecto True).
+
+    Devuelve:
+    ---------
+    espectros : list of np.ndarray
+        Lista de espectros UV1, UV2, VIS, NIR correspondientes a cada shot (n1, n2, n3, n4 y n5).
+    wavelengths : list of np.ndarray
+        Lista de longitudes de onda correspondientes.
+    nombres : list of str
+        Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
+    """
+        
     nombre_base_n1 = f"{nombre_base}-n1"
     nombre_base_n2 = f"{nombre_base}-n2"
     nombre_base_n3 = f"{nombre_base}-n3"
@@ -94,11 +117,38 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
     espectros_n4, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n4)
     espectros_n5, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n5)
 
-    return nombres, wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5
+    return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, nombres
 
 
 def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
-    n, ws, n1, n2, n3, n4, n5 = cargar_espectros_5shots(carpeta, nombre_base)
+
+    """
+    Carga automáticamente los archivos UV1, UV2, VIS y NIR de los 5 shots realizados sobre un spot.
+    El primer shot se descarta, así como los que tengan un nivel energético muy alto (estado de saturación)
+    o muy bajo. Esta última característica se evalúa a través del espectro en el rango del visible.
+    Los espectros de los shots restantes se promedian para obtener un espectro final.
+
+
+    Parámetros:
+    -----------
+    carpeta : str
+        Nombre de la subcarpeta dentro de '../Spectra/'.
+    nombre_base : str
+        Parte común del nombre del archivo sin el sufijo numérico.
+    quitar_extremos : bool, opcional
+        Si True, elimina los primeros y últimos 16 valores (por defecto True).
+
+    Devuelve:
+    ---------
+    ws : list of np.ndarray
+        Lista de longitudes de onda correspondientes.
+    espectros : list of np.ndarray
+        Lista de espectros UV1, UV2, VIS y NIR promediados
+    nombres: list of str
+        Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
+    """
+        
+    ws, n1, n2, n3, n4, n5, nombres = cargar_espectros_5shots(carpeta, nombre_base)
 
     partes = os.path.normpath(carpeta).split(os.sep)
     
@@ -133,6 +183,7 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
         UV2_prom = None
         VIS_prom = None
         NIR_prom = None
+        intensidades = None
     else:
         # Filtramos todos los arrays con los índices válidos
         UV1_filtrado = [espectros_UV1[i] for i in indices_validos]
@@ -145,19 +196,19 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
         VIS_prom = np.mean(VIS_filtrado, axis=0)
         NIR_prom = np.mean(NIR_filtrado, axis=0)
 
+        intensidades = [UV1_prom, UV2_prom, VIS_prom, NIR_prom]
+
          # Construir la ruta de salida
         nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
-        datos = []
-        intensidades = [UV1_prom, UV2_prom, VIS_prom, NIR_prom] 
+        datos = [] 
         for lmbs, ints in zip(ws, intensidades):
             for l, i in zip(lmbs, ints):
                 datos.append([l, i])
         
-        # Guardar
+        # Guardar datos de nivel 1
         guardar_resultados_csv(nombre_archivo_salida, datos)
 
-
-    return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
+    return ws, intensidades, nombres
 
 
 
