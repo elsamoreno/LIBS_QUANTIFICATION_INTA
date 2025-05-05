@@ -44,7 +44,7 @@ plot_and_save_spectra(lambdas_T3_P2, espectros_T3_P2, "T3-P2", "Spectra/FinalSam
 #Guardar imágenes NIVEL-1 superpuestas
 plot_and_save_spectra([lambdas_T1_P1, lambdas_T1_P2, lambdas_T1_P3], [espectros_T1_P1, espectros_T1_P2, espectros_T1_P3], "T1 - Comparación de los 3 spots", "Spectra/FinalSamplesTrial/Level1/LV1_T1_P1-2-3.png", ["P1","P2","P3"])
 plot_and_save_spectra([lambdas_T2_P1, lambdas_T2_P2, lambdas_T2_P3], [espectros_T2_P1, espectros_T2_P2, espectros_T2_P3], "T2 - Comparación de los 3 spots", "Spectra/FinalSamplesTrial/Level1/LV1_T2_P1-2-3.png", ["P1","P2","P3"])
-plot_and_save_spectra([lambdas_T3_P1, lambdas_T3_P2], [espectros_T2_P1, espectros_T2_P2], "T3 - Comparación de los 2 spots", "Spectra/FinalSamplesTrial/Level1/LV1_T3_P1-2-3.png", ["P1","P2"])
+plot_and_save_spectra([lambdas_T3_P1, lambdas_T3_P2], [espectros_T3_P1, espectros_T3_P2], "T3 - Comparación de los 2 spots", "Spectra/FinalSamplesTrial/Level1/LV1_T3_P1-2-3.png", ["P1","P2"])
 
 #Guardar imágenes NIVEL-2
 plot_and_save_spectra(ws1, processed_spectra_T1_P1, "T1-P1-Preprocessed", "Spectra/FinalSamplesTrial/Level2/LV2_T1_P1.png")
