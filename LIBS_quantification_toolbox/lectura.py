@@ -35,7 +35,7 @@ def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
 
 def cargar_espectros(carpeta, nombre_base, quitar_extremos=True):
     """
-    Carga automáticamente los archivos UV1, UV2, VIS y NIR relacionados con un mismo experimento.
+    Carga automáticamente los archivos UV1, UV2, VIS y NIR relacionados con un mismo espectro.
 
     Parámetros:
     -----------
@@ -97,20 +97,15 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
     return nombres, wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5
 
 
-def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
+def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save= False):
     n, ws, n1, n2, n3, n4, n5 = cargar_espectros_5shots(carpeta, nombre_base)
 
     partes = os.path.normpath(carpeta).split(os.sep)
-    
-    try:
-        idx_level0 = partes.index("Level0")
-        mx = partes[idx_level0 + 1]
-        py = partes[idx_level0 + 2]
-    except (ValueError, IndexError):
-        raise ValueError(f"No se pudo extraer MX y PY desde la ruta: {carpeta}")
+
 
     umbral_saturacion = 0.95 * 65535  # Nivel de filtrado superior para evitar espectros saturados
-    umbral_energia = 0.5 * 65535      # Nivel de filtrado inferior para evitar espectros poco energéticos
+    #TODO: Cambiar el Umbral mínimo mediante algún otro método
+    #umbral_energia = 0.5 * 65535      # Nivel de filtrado inferior para evitar espectros poco energéticos
 
     # Agrupamos los espectros en función del rango de frecuencias descartando el primer shot
     espectros_UV1 = np.array([n1[0], n2[0], n3[0], n4[0], n5[0]])
@@ -124,7 +119,8 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
     # Filtramos los espectros para deshacernos de los saturados o muy poco energéticos
     for i, spec_vis in enumerate(espectros_VIS):
         max_val = np.max(spec_vis)
-        if umbral_energia < max_val < umbral_saturacion:
+        #if umbral_energia < max_val < umbral_saturacion:
+        if  max_val < umbral_saturacion:
             indices_validos.append(i)
 
     if len(indices_validos) == 0:
@@ -145,16 +141,23 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
         VIS_prom = np.mean(VIS_filtrado, axis=0)
         NIR_prom = np.mean(NIR_filtrado, axis=0)
 
-         # Construir la ruta de salida
-        nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
-        datos_procesados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
-        encabezado = ['UV1', 'UV2', 'VIS', 'NIR']
+        if save:
+            try:
+                idx_level0 = partes.index("Level0")
+                mx = partes[idx_level0 + 1]
+                py = partes[idx_level0 + 2]
+            except (ValueError, IndexError):
+                raise ValueError(f"No se pudo extraer MX y PY desde la ruta: {carpeta}")
+            # Guardar los resultados en un archivo CSV
+            # Crear la carpeta de salida si no existe
+            if not os.path.exists("../Spectra/FinalSamplesTrial/Level1"):
+                os.makedirs("../Spectra/FinalSamplesTrial/Level1")
+                # Construir la ruta de salida
+                nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
+                datos_procesados = list(zip(UV1_prom, UV2_prom, VIS_prom, NIR_prom))  # Combinamos las listas
+                encabezado = ['UV1', 'UV2', 'VIS', 'NIR']
 
-        # Guardar
-        guardar_resultados_csv(nombre_archivo_salida, datos_procesados, encabezado)
-
-
+                # Guardar
+                guardar_resultados_csv(nombre_archivo_salida, datos_procesados, encabezado)
     return n, ws, UV1_prom, UV2_prom, VIS_prom, NIR_prom
-
-
 

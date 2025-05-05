@@ -2,7 +2,7 @@
 clc; close all; clear all;
 
 % Define input folder
-infolder = 'C:\Nacho\Universidad\Prácticas Raman\LIBS_QUANTIFICATION_INTA\Spectra\RAW';
+infolder = 'C:\Nacho\Universidad\Prácticas Raman\LIBS_QUANTIFICATION_INTA\Spectra\FinalSamples\RAW';
 
 % Processing type substract DARK and calibrate X axis
 
@@ -28,7 +28,7 @@ spectrometers = {'UV1','UV2','VIS','NIR'};
 tmp = dir(infolder);
 tmp_count = 1;
 for ii = 1:size(tmp,1)
-    if (tmp(ii).isdir == 1) & not(strcmp(tmp(ii).name,'.')) & not(strcmp(tmp(ii).name, '..'))
+    if (tmp(ii).isdir == 1) && not(strcmp(tmp(ii).name,'.')) && not(strcmp(tmp(ii).name, '..'))
         folderlist{tmp_count} = tmp(ii).name;
         tmp_count = tmp_count+1;
     end
