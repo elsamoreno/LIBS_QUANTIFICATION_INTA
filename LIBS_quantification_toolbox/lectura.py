@@ -215,3 +215,101 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save
                 guardar_resultados_csv(nombre_archivo_salida, datos)
     return ws, intensidades, nombres
 
+<<<<<<< Updated upstream
+=======
+
+
+def cargar_espectros_5shotspromV2_0(carpeta, nombre_base, quitar_extremos=True):
+    """
+    Carga automáticamente los archivos UV1, UV2, VIS y NIR de los 5 shots realizados sobre un spot.
+    El primer shot se descarta, así como los que tengan un nivel energético muy alto (estado de saturación)
+    o muy bajo. Esta última característica se evalúa a través del espectro en el rango del visible.
+    Los espectros de los shots restantes se promedian para obtener un espectro final.
+
+    Parámetros:
+    -----------
+    carpeta : str
+        Nombre de la subcarpeta dentro de '../Spectra/'.
+    nombre_base : str
+        ***Este parámetro ya no se usa para construir los nombres de archivo.***
+    quitar_extremos : bool, opcional
+        Si True, elimina los primeros y últimos 16 valores (por defecto True).
+
+    Devuelve:
+    ---------
+    ws : list of np.ndarray
+        Lista de longitudes de onda correspondientes.
+    espectros : list of np.ndarray
+        Lista de espectros UV1, UV2, VIS y NIR promediados
+    nombres: list of str
+        Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
+    """
+
+    partes = os.path.normpath(carpeta).split(os.sep)
+
+    try:
+        idx_level0 = partes.index("Level0")
+        mx = partes[idx_level0 + 1]
+        py = partes[idx_level0 + 2]
+    except (ValueError, IndexError):
+        raise ValueError(f"No se pudo extraer MX y PY desde la ruta: {carpeta}")
+
+    # Nuevo nombre base automático
+    base = f"{mx}_{py}_shot"
+
+    # Cargar datos manualmente con nombres construidos
+    espectros_shots = []
+    nombres = ["UV1", "UV2", "VIS", "NIR"]
+    ws = []
+
+    for shot in range(1, 6):
+        espectros_por_cod = []
+        longitudes = []
+
+        for cod in nombres:
+            archivo = os.path.join("../Spectra", carpeta, f"{base}{shot}_{cod}.xy")
+            try:
+                data = np.loadtxt(archivo)
+                if quitar_extremos:
+                    longitudes.append(data[16:-16, 0])
+                    espectros_por_cod.append(data[16:-16, 1])
+                else:
+                    longitudes.append(data[:, 0])
+                    espectros_por_cod.append(data[:, 1])
+            except Exception as e:
+                raise FileNotFoundError(f"No se pudo cargar el archivo: {archivo}\n{e}")
+
+        if not ws:
+            ws = longitudes
+        espectros_shots.append(espectros_por_cod)
+
+    espectros_shots = np.array(espectros_shots)  # Shape: (5 shots, 4 rangos, N puntos)
+
+    umbral_saturacion = 0.95 * 65535
+    umbral_energia = 0.5 * 65535
+
+    indices_validos = []
+    for i, spec_vis in enumerate(espectros_shots[:, 2]):  # VIS en índice 2
+        max_val = np.max(spec_vis)
+        if umbral_energia < max_val < umbral_saturacion:
+            indices_validos.append(i)
+
+    if len(indices_validos) == 0:
+        print(f"No hay espectros válidos para calcular la media en el spot {mx}_{py}.")
+        intensidades = [None] * 4
+    else:
+        intensidades = []
+        for j in range(4):  # Para UV1, UV2, VIS, NIR
+            promedio = np.mean([espectros_shots[i][j] for i in indices_validos], axis=0)
+            intensidades.append(promedio)
+
+        # Guardar espectros promedio
+        nombre_archivo_salida = f"../Spectra/FinalSamplesTrial/Level1/LV1_{mx}_{py}.txt"
+        datos = []
+        for lmbs, ints in zip(ws, intensidades):
+            for l, i in zip(lmbs, ints):
+                datos.append([l, i])
+        guardar_resultados_csv(nombre_archivo_salida, datos)
+
+    return ws, intensidades, nombres
+>>>>>>> Stashed changes
