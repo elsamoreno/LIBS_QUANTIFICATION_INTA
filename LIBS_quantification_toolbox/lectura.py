@@ -120,7 +120,7 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
     return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, nombres
 
 
-def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True):
+def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save = False):
 
     """
     Carga automáticamente los archivos UV1, UV2, VIS y NIR de los 5 shots realizados sobre un spot.
