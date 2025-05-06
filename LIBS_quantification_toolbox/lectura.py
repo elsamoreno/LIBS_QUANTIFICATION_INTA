@@ -82,8 +82,7 @@ def cargar_espectros(carpeta, nombre_base, quitar_extremos=True):
 
 
 
-def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
-
+def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True, lb = False):
     """
     Carga automáticamente los archivos UV1, UV2, VIS y NIR correspondientes a los 5 shots de un mismo spot.
 
@@ -105,12 +104,18 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
     nombres : list of str
         Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
     """
-        
-    nombre_base_n1 = f"{nombre_base}-n1"
-    nombre_base_n2 = f"{nombre_base}-n2"
-    nombre_base_n3 = f"{nombre_base}-n3"
-    nombre_base_n4 = f"{nombre_base}-n4"
-    nombre_base_n5 = f"{nombre_base}-n5"
+    if  lb:
+        nombre_base_n1 = f"{nombre_base}_n1"
+        nombre_base_n2 = f"{nombre_base}_n2"
+        nombre_base_n3 = f"{nombre_base}_n3"
+        nombre_base_n4 = f"{nombre_base}_n4"
+        nombre_base_n5 = f"{nombre_base}_n5"
+    else:
+        nombre_base_n1 = f"{nombre_base}-n1"
+        nombre_base_n2 = f"{nombre_base}-n2"
+        nombre_base_n3 = f"{nombre_base}-n3"
+        nombre_base_n4 = f"{nombre_base}-n4"
+        nombre_base_n5 = f"{nombre_base}-n5"
     espectros_n1, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n1)
     espectros_n2, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n2)
     espectros_n3, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n3)
@@ -120,7 +125,7 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True):
     return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, nombres
 
 
-def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save = False):
+def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True,lb = False, save = False):
 
     """
     Carga automáticamente los archivos UV1, UV2, VIS y NIR de los 5 shots realizados sobre un spot.
@@ -148,13 +153,13 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save
         Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
     """
         
-    ws, n1, n2, n3, n4, n5, nombres = cargar_espectros_5shots(carpeta, nombre_base)
+    ws, n1, n2, n3, n4, n5, nombres = cargar_espectros_5shots(carpeta, nombre_base,lb = lb)
 
     partes = os.path.normpath(carpeta).split(os.sep)
 
 
-    umbral_saturacion = 0.95 * 65535  # Nivel de filtrado superior para evitar espectros saturados
-    #TODO: Cambiar el Umbral mínimo mediante algún otro método
+    #umbral_saturacion = 0.99 * 65535  # Nivel de filtrado superior para evitar espectros saturados
+    umbral_saturacion = 65000  # Nivel de filtrado superior para evitar espectros saturados
     #umbral_energia = 0.5 * 65535      # Nivel de filtrado inferior para evitar espectros poco energéticos
 
     # Agrupamos los espectros en función del rango de frecuencias descartando el primer shot
@@ -214,9 +219,6 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True, save
                 # Guardar datos de nivel 1
                 guardar_resultados_csv(nombre_archivo_salida, datos)
     return ws, intensidades, nombres
-
-<<<<<<< Updated upstream
-=======
 
 
 def cargar_espectros_5shotspromV2_0(carpeta, nombre_base, quitar_extremos=True):
@@ -312,4 +314,3 @@ def cargar_espectros_5shotspromV2_0(carpeta, nombre_base, quitar_extremos=True):
         guardar_resultados_csv(nombre_archivo_salida, datos)
 
     return ws, intensidades, nombres
->>>>>>> Stashed changes
