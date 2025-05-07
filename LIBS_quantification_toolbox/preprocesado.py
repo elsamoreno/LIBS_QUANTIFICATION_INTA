@@ -57,7 +57,7 @@ def apply_preprocessing(raw_spectra,raw_wavelengths,
       5) Normalize by shared continuum
 
     Returns:
-      processed_spectra, processed_wavelengths (, continua)
+      processed_wavelengths, processed_spectra  (, continua)
     """
     # 1) Denoise
     denoised = denoise_spectra(raw_spectra, 
