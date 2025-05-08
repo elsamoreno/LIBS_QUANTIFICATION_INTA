@@ -105,7 +105,7 @@ def cargar_espectros(carpeta, nombre_base, quitar_extremos=True, dark=False):
 
 def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True, lb = False):
     """
-    Carga automáticamente los archivos UV1, UV2, VIS, NIR y Dark correspondientes a los 5 shots de un mismo spot.
+    Carga automáticamente los archivos UV1, UV2, VIS y NIR correspondientes a los 5 shots de un mismo spot.
 
     Parámetros:
     -----------
@@ -138,13 +138,13 @@ def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True, lb = Fal
         nombre_base_n4 = f"{nombre_base}-n4"
         nombre_base_n5 = f"{nombre_base}-n5"
     #Sacamos el dark del primer espectro
-    espectros_n1, wavelengths, nombres, dark = cargar_espectros(carpeta, nombre_base_n1, dark=True)
+    espectros_n1, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n1)
     espectros_n2, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n2)
     espectros_n3, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n3)
     espectros_n4, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n4)
     espectros_n5, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n5)
 
-    return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, dark, nombres
+    return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, nombres
 
 
 def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True,lb = False, save = False):
@@ -242,52 +242,84 @@ def cargar_espectros_5shotsprom(carpeta, nombre_base, quitar_extremos=True,lb = 
                 guardar_resultados_csv(nombre_archivo_salida, datos)
     return ws, intensidades, nombres
 
-# TODO: Cambiar esta función para que coja los archivos de manera 'MY_PZ_shotX_UV1'
-def cargar_espectros_5shots(carpeta, nombre_base, quitar_extremos=True, lb = False):
-    """
-    Carga automáticamente los archivos UV1, UV2, VIS, NIR y Dark correspondientes a los 5 shots de un mismo spot.
 
-    Parámetros:
-    -----------
+
+
+def cargar_espectros_5shots2_0(carpeta, nombre_base):
+    """
+    Carga los archivos 'MX_PY_shotZ_[UV1,UV2,VIS,NIR].txt' para Z=1..5,
+    extrae el dark del UV1 del primer shot y retorna:
+        wavelengths, n1, n2, n3, n4, n5, dark, nombres
+
+    Parámetros
+    ----------
     carpeta : str
-        Nombre de la subcarpeta dentro de '../Spectra/'.
+        Subcarpeta bajo '../Spectra/' donde están los archivos.
     nombre_base : str
-        Parte común del nombre del archivo sin el sufijo numérico.
+        La parte común 'MX_PY' de los nombres de archivo.
     quitar_extremos : bool, opcional
-        Si True, elimina los primeros y últimos 16 valores (por defecto True).
+        Si True, elimina 16 puntos al inicio y fin de cada espectro.
 
-    Devuelve:
-    ---------
-    espectros : list of np.ndarray
-        Lista de espectros UV1, UV2, VIS, NIR correspondientes a cada shot (n1, n2, n3, n4 y n5).
+    Devuelve
+    -------
     wavelengths : list of np.ndarray
-        Lista de longitudes de onda correspondientes.
+        Lista de 4 vectores de longitud de onda [UV1, UV2, VIS, NIR].
+    n1, n2, n3, n4, n5 : lists of np.ndarray
+        Cada uno es una lista de 4 arrays (UV1, UV2, VIS, NIR) para shot 1…5.
+    dark : np.ndarray
+        Dark extraído del UV1 del primer shot.
     nombres : list of str
-        Lista de nombres de los espectros (UV1, UV2, VIS, NIR).
+        ['UV1','UV2','VIS','NIR']
     """
-    if  lb:
-        nombre_base_n1 = f"{nombre_base}_n1"
-        nombre_base_n2 = f"{nombre_base}_n2"
-        nombre_base_n3 = f"{nombre_base}_n3"
-        nombre_base_n4 = f"{nombre_base}_n4"
-        nombre_base_n5 = f"{nombre_base}_n5"
-    else:
-        nombre_base_n1 = f"{nombre_base}-n1"
-        nombre_base_n2 = f"{nombre_base}-n2"
-        nombre_base_n3 = f"{nombre_base}-n3"
-        nombre_base_n4 = f"{nombre_base}-n4"
-        nombre_base_n5 = f"{nombre_base}-n5"
-    #Sacamos el dark del primer espectro
-    espectros_n1, wavelengths, nombres, dark = cargar_espectros(carpeta, nombre_base_n1, dark=True)
-    espectros_n2, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n2)
-    espectros_n3, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n3)
-    espectros_n4, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n4)
-    espectros_n5, wavelengths, nombres = cargar_espectros(carpeta, nombre_base_n5)
+    bandas = ['UV1','UV2','VIS','NIR']
+    nombres = bandas.copy()
 
-    return wavelengths, espectros_n1, espectros_n2, espectros_n3, espectros_n4, espectros_n5, dark, nombres
+    # Preparar contenedores
+    wavelengths =  []
+    shots = []        # aquí guardamos 5 listas, cada una 4 arrays
+    dark = []    # aquí recogemos dark por banda desde shot1
+
+    for shot in range(1, 6):
+        suffix = f"_shot{shot}"
+        specs_this_shot = []
+        for banda in bandas:
+            fname = f"{nombre_base}{suffix}_{banda}.txt"
+            ruta  = os.path.join('..', 'Spectra', carpeta, fname)
+
+            # En shot1, extraer dark de cada banda
+            if shot == 1:
+                dark_vals, _ = leer_archivo_txt(ruta, dark=True)
+                if dark_vals is None:
+                    raise FileNotFoundError(f"No se pudo leer dark en {ruta}")
+                dark_vals = dark_vals[16:-16]
+                dark.append(dark_vals)
+
+            # Leer espectro normal
+            spec_vals, wave = leer_archivo_txt(ruta, dark=False)
+            if spec_vals is None or wave is None:
+                raise FileNotFoundError(f"No se pudo leer espectro en {ruta}")
+
+            # Recorte opcional
+            spec_vals = spec_vals[16:-16]
+            wave      = wave[16:-16]
+
+            # Guardar espectro
+            specs_this_shot.append(spec_vals)
+
+            # Guardar wavelength una sola vez (shot1)
+            if shot == 1:
+                wavelengths.append(wave)
+
+        shots.append(specs_this_shot)
+
+    # Desempaquetar shots
+    n1, n2, n3, n4, n5 = shots
+
+    return wavelengths, n1, n2, n3, n4, n5, dark, nombres
 
 
-def cargar_espectros_5shotspromV2_0(carpeta, nombre_base, lb = False):
+
+def cargar_espectros_5shotspromV2_0(carpeta, nombre_base):
     """
     Carga y promedia los 5 shots de un spot, descartando:
       - El primer shot
@@ -318,26 +350,49 @@ def cargar_espectros_5shotspromV2_0(carpeta, nombre_base, lb = False):
         ['UV1','UV2','VIS','NIR']
     """
     # 1) Cargo los 5 shots + dark
-    ws, n1, n2, n3, n4, n5,drk, nombres = cargar_espectros_5shots(carpeta, nombre_base, lb = lb)
+    ws, n1, n2, n3, n4, n5,drk, nombres = cargar_espectros_5shots2_0(carpeta, nombre_base)
 
     # 2) Agrupo por banda y descarto el primer shot (índice 0)
     drk_arr = np.stack(drk, axis=0)  # (4 bandas, N pixels)
     shots = np.stack([n1, n2, n3, n4, n5], axis=0)  # (5,4,N)
     shots = shots[1:, ...]  # (4,4,N)
 
-    # 3) Filtro por saturación/nivel bajo en todas las bandas
+    # 3) Filtro por saturación/nivel bajo en todas las bandas,
+    #    excepto en la última (NIR) solo < 1000 nm
     umbral_max = 65000
-    umbral_min =    0  # ajustable
+    umbral_min = 0     # ajustable
     valid_idxs = []
+
     for i in range(shots.shape[0]):
-        # intensidades máximas por banda en el shot i
-        max_per_band = shots[i].max(axis=1)  # (4,)
-        if np.all((max_per_band < umbral_max) & (max_per_band > umbral_min)):
+        ok = True
+        # recorro cada banda: 0=UV1,1=UV2,2=VIS,3=NIR
+        for b in range(shots.shape[1]):
+            wl_band = ws[b]
+            spec_band = shots[i, b, :]
+
+            if b == shots.shape[1] - 1:
+                # para la última banda (NIR), solo miro <=1000 nm
+                mask = wl_band <= 1000
+                max_val = spec_band[mask].max()
+            else:
+                # para las demás bandas, miro todo el rango
+                max_val = spec_band.max()
+            # compruebo umbrales
+            if not (umbral_min < max_val < umbral_max):
+                ok = False
+                break
+
+        if ok:
             valid_idxs.append(i)
-    # Si no hay shots válidos, devuelvo intensidades=None
+
+    # si no hay shots válidos
     if not valid_idxs:
-        print('Todos los espectros saturan')
+        print(f"{nombre_base}: todos los espectros saturan o están fuera de rango")
         return ws, None, nombres
+
+    # informe de cuántos shots válidos hay
+    print(f"{nombre_base}: utilizando {len(valid_idxs)} de {shots.shape[0]} shots para el promedio")
+
     
     # Extraigo los shots válidos 
     valid_shots = shots[valid_idxs, :, :]      # (K,4,N)

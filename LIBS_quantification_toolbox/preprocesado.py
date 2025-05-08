@@ -42,7 +42,7 @@ def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
 # --------------------------------------
 # MAIN API
 # --------------------------------------
-def apply_preprocessing(raw_spectra,raw_wavelengths,
+def apply_preprocessing(raw_spectra,raw_wavelengths, norm_sum=False,
     wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
     baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
     return_continuum=False):
@@ -68,8 +68,11 @@ def apply_preprocessing(raw_spectra,raw_wavelengths,
     corrected, continua = subtract_baseline(stiched, span=baseline_span, max_iter=baseline_max_iter, b=baseline_b, tol=baseline_tol)
     #4) Trim
     trimmed, trimmed_wavelengths = trim_overlap_regions(corrected, raw_wavelengths)
-    #5) Normalize by shared continuum
-    normalized, cont = normalize_by_continuum(continua, trimmed)
+    if not norm_sum:
+        #5) Normalize by shared continuum
+        normalized, cont = normalize_by_continuum(continua, trimmed)
+    else:
+        normalized, cont = normalize_by_sum(continua, trimmed)
 
     wls = np.concatenate(trimmed_wavelengths)
     return (wls, normalized, cont) if return_continuum else (wls, normalized)
@@ -338,20 +341,22 @@ def normalize_by_continuum(continua, spectra):
         raise ValueError("Continuum sum is zero.")
     return spec/total, cont
 
+# --------------------------------------
+# 5) NORMALIZATION by sum
+# --------------------------------------
+def normalize_by_sum(continua, spectra):
+    """
+    Normalize concatenated spectra by total continuum sum.
 
-
-def apply_preprocessing_and_save(raw_spectra,raw_wavelengths, nombre_archivo_salida,
-    wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
-    baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
-    return_continuum=False):
-
-    lambdas, preprocessed_spectra = apply_preprocessing(raw_spectra,raw_wavelengths,
-    wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
-    baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
-    return_continuum=False)
-
-    datos = list(zip(lambdas, preprocessed_spectra))
-
-    guardar_resultados_csv(nombre_archivo_salida, datos)
-
-    return lambdas, preprocessed_spectra
+    Parameters:
+      continua: list of arrays
+      spectra: list of arrays
+    Returns:
+      normalized: 1D array
+    """
+    cont = np.concatenate(continua)
+    spec = np.concatenate(spectra)
+    total = cont.sum() + spec.sum()
+    if total==0:
+        raise ValueError("Spectra sum is zero.")
+    return spec/total, cont
