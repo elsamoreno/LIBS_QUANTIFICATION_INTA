@@ -6,7 +6,6 @@ sys.path.append('C:/Nacho/Universidad/Prácticas Raman/LIBS_QUANTIFICATION_INTA'
 from LIBS_quantification_toolbox import * 
 import numpy as np
 
-#TODO: Añadir que pase a Lvl2 y guarde archivos e Imagen
 def lvl0_to_lvl1(carpeta):
     """
     Recorre ../Spectra/<carpeta>/Level0/MX/PY, procesa los 5 shots de cada spot y
@@ -47,7 +46,7 @@ def lvl0_to_lvl1(carpeta):
             # nombre_base = "MX_PY"
             nombre_base = f"{mx}_{py}"
             # Llama a la rutina que carga y promedia los 5 shots
-            espectros, wls, nombres = cargar_espectros_5shotspromV2_0(
+            wls, espectros, nombres = cargar_espectros_5shotspromV2_0(
                 carpeta=os.path.join(carpeta, 'Level0', mx, py),
                 nombre_base=nombre_base)
             if espectros is None:
@@ -89,3 +88,5 @@ def lvl0_to_lvl1(carpeta):
             ax.clear()
             print(f"[OK] Saved Level2_{nombre_base} to {lvl2_dir}")
 
+
+lvl0_to_lvl1('FinalSamples')

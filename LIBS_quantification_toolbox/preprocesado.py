@@ -42,7 +42,7 @@ def guardar_resultados_csv(nombre_archivo, datos, encabezado=None):
 # --------------------------------------
 # MAIN API
 # --------------------------------------
-def apply_preprocessing(raw_spectra,raw_wavelengths, norm_sum=False,
+def apply_preprocessing(raw_spectra,raw_wavelengths, norm_sum=True,
     wavelet_name='bior3.3', decomposition_level=None, sigma_threshold=3.0, denoise_method='mad', supercam_iterations=5,
     baseline_span=0.1, baseline_max_iter=5, baseline_b=3.5, baseline_tol=1e-3,
     return_continuum=False):

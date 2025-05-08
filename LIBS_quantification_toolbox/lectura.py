@@ -359,7 +359,7 @@ def cargar_espectros_5shotspromV2_0(carpeta, nombre_base):
 
     # 3) Filtro por saturación/nivel bajo en todas las bandas,
     #    excepto en la última (NIR) solo < 1000 nm
-    umbral_max = 65000
+    umbral_max = 0.95*65535
     umbral_min = 0     # ajustable
     valid_idxs = []
 
@@ -397,9 +397,12 @@ def cargar_espectros_5shotspromV2_0(carpeta, nombre_base):
     # Extraigo los shots válidos 
     valid_shots = shots[valid_idxs, :, :]      # (K,4,N)
 
-    # 4) Resto drk de cada shot
-    valid_shots_corr = valid_shots - drk_arr[None, :, :]  # (k,4,N)
-    
+    # 4) Compruebo si existe drk y lo resto de cada shot
+    if drk_arr is not None:
+        valid_shots_corr = valid_shots - drk_arr[np.newaxis, :, :]
+    else:
+        valid_shots_corr = valid_shots
+
     # 8) Extraigo los shots válidos y promedio por banda
     avg_per_band = valid_shots_corr.mean(axis=0)         # (4,N)
     
