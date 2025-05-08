@@ -359,7 +359,7 @@ def cargar_espectros_5shotspromV2_0(carpeta, nombre_base):
 
     # 3) Filtro por saturación/nivel bajo en todas las bandas,
     #    excepto en la última (NIR) solo < 1000 nm
-    umbral_max = 0.95*65535
+    umbral_max = 0.98*65535
     umbral_min = 0     # ajustable
     valid_idxs = []
 
