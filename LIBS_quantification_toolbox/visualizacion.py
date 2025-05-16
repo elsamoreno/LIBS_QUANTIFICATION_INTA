@@ -5,7 +5,7 @@ import numpy as np
 def plot_spectra(wavelengths, espectros, titulo, nombres=None, 
                  xlabel="Longitud de onda (nm)", 
                  ylabel="Intensidad (cuentas)", 
-                 figsize=(12, 5)):
+                 figsize=(12, 5), no_show = False):
     """
     Plot one or more spectra (wavelength vs. intensity) on the same axes.
 
@@ -89,7 +89,8 @@ def plot_spectra(wavelengths, espectros, titulo, nombres=None,
     ax.set_ylabel(ylabel)
     ax.legend()
     plt.tight_layout()
-    plt.show()
+    if not no_show:
+        plt.show()
 
     return fig, ax
 
